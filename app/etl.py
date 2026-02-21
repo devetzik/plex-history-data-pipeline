@@ -5,8 +5,7 @@ import time
 import logging
 import os
 
-# --- LOGGING CONFIGURATION ---
-# Define logger at the top level so it's available to all functions 
+# Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -14,7 +13,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# --- CONFIGURATION ---
 TAUTULLI_IP = os.getenv("TAUTULLI_IP")
 TAUTULLI_API_KEY = os.getenv("TAUTULLI_API_KEY")
 DB_USER = os.getenv("DB_USER")
@@ -61,13 +59,12 @@ def fetch_history():
     df['watched_at'] = pd.to_datetime(df['date'], unit='s')
     df = df.drop(columns=['date'])
     
-    # 3. LOAD (The "Idempotent" Strategy)
+    # 3. LOAD
     # We will use the 'reference_id' from Tautulli as our Primary Key to prevent duplicates.
     
     logger.info(f"Processing {len(df)} records for database insertion...")
     
     with engine.connect() as conn:
-        # Create table if it doesn't exist
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS plex_history (
                 reference_id INT PRIMARY KEY,
@@ -88,8 +85,7 @@ def fetch_history():
         df['reference_id'] = df['reference_id'].astype(int)
 
 
-        # Insert row by row (Upsert logic: If ID exists, do nothing)
-        # In a massive production system, we'd use bulk copy, but loop is fine for home labs.
+        # Insert row by row (If ID exists, do nothing)
         count = 0
         for index, row in df.iterrows():
             insert_sql = text("""
