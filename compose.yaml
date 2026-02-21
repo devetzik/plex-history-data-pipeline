@@ -1,0 +1,33 @@
+services:
+  postgres_plex:
+    container_name: postgres_plex
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      TZ: ${TZ}
+    ports:
+      - "5434:5432"
+    restart: unless-stopped
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+  etl_worker:
+    container_name: etl_worker
+    build: ./app
+    environment:
+      - DB_HOST=postgres_plex
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - TZ=${TZ}
+      - TAUTULLI_IP=${TAUTULLI_IP}
+      - TAUTULLI_API_KEY=${TAUTULLI_API_KEY}
+    restart: unless-stopped
+    depends_on:
+      - postgres_plex
+
+networks:
+  default:
+  data_network:
+    external: true
